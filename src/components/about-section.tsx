@@ -1,3 +1,11 @@
+const TEAM_MEMBERS = [
+  "Jakub Sowiński",
+  "Piotr Gołębiowski",
+  "Jakub Stodolny",
+  "Krystian Trunowicz",
+  "Jakub Starostecki",
+];
+
 export function AboutSection() {
   return (
     <section
@@ -17,10 +25,30 @@ export function AboutSection() {
         </div>
 
         <div className="max-w-2xl">
-          <p className="text-base leading-relaxed text-navy">
-            [Krótki opis zespołu, celu projektu i kontaktu. Do podmiany.]
+          <h3 className="text-lg font-semibold text-navy">
+            KN Neuron Prawdowid
+          </h3>
+
+          <p className="mt-5 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Członkowie
           </p>
-          <p className="mt-4 text-sm text-muted">
+
+          <ul className="mt-3 space-y-2">
+            {TEAM_MEMBERS.map((member) => (
+              <li
+                key={member}
+                className="flex items-center gap-2.5 text-sm text-navy"
+              >
+                <span
+                  className="h-1.5 w-1.5 shrink-0 bg-crimson"
+                  aria-hidden="true"
+                />
+                {member}
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-6 border-t border-line pt-4 text-sm text-muted">
             PRAWDOWID, Hackathon 2026.
           </p>
         </div>
