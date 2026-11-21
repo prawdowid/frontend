@@ -19,19 +19,7 @@ const TABS: { id: AnalysisInputType; label: string }[] = [
   { id: "file", label: "Plik" },
 ];
 
-const ALLOWED_EXTENSIONS = new Set([
-  "png",
-  "jpg",
-  "jpeg",
-  "webp",
-  "gif",
-  "heic",
-  "heif",
-  "mp4",
-  "webm",
-  "mov",
-  "m4v",
-]);
+const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "mp4"]);
 
 interface InputPanelProps {
   isLoading: boolean;
@@ -84,7 +72,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
     }
 
     if (!isAllowedFile(nextFile)) {
-      setError("Dozwolone pliki: obrazy i wideo.");
+      setError("Dozwolone pliki: PNG, JPG i MP4.");
       return;
     }
 
@@ -260,7 +248,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,video/*,.mov,.m4v,.heic,.heif"
+                  accept=".png,.jpg,.mp4"
                   className="sr-only"
                   disabled={isLoading}
                   onChange={(event) => {
@@ -294,7 +282,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                       Przeciągnij plik tutaj
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-muted">
-                      PNG, JPG, WEBP, MP4, WEBM, MOV. Maks. 50 MB.
+                      PNG, JPG, MP4. Maks. 50 MB.
                     </p>
                     <button
                       type="button"
@@ -331,10 +319,6 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
 }
 
 function isAllowedFile(file: File): boolean {
-  if (file.type.startsWith("image/") || file.type.startsWith("video/")) {
-    return true;
-  }
-
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
   return ALLOWED_EXTENSIONS.has(extension);
 }
