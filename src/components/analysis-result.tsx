@@ -1,31 +1,20 @@
 "use client";
 
-import type { AnalysisVerdict } from "@/types/analysis";
+import type { FactCheckResult, Verdict } from "@/types/analysis";
 import type { AnalysisState } from "@/types/ui";
 
-const VERDICT_META: Record<
-  AnalysisVerdict,
-  { label: string; badge: string; bar: string }
-> = {
-  credible: {
-    label: "Wiarygodne",
+const VERDICT_META: Record<Verdict, { label: string; badge: string }> = {
+  supported: {
+    label: "Potwierdzone przez źródła",
     badge: "bg-navy text-white",
-    bar: "bg-navy",
   },
-  misleading: {
-    label: "Mylące",
-    badge: "bg-[#B7791F] text-white",
-    bar: "bg-[#B7791F]",
-  },
-  false: {
-    label: "Fałszywe",
+  contradicted: {
+    label: "Obalone przez źródła",
     badge: "bg-crimson text-white",
-    bar: "bg-crimson",
   },
-  inconclusive: {
-    label: "Nierozstrzygnięte",
+  unclear: {
+    label: "Brak jednoznacznych danych",
     badge: "bg-mist text-navy",
-    bar: "bg-muted",
   },
 };
 
@@ -108,67 +97,201 @@ function SuccessState({
   onReset: () => void;
 }) {
   const { result } = state;
-  const meta = VERDICT_META[result.verdict];
-  const score = Math.min(100, Math.max(0, Math.round(result.confidenceScore)));
 
   return (
     <article className="border border-line bg-white shadow-sm">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_270px]">
-        <div className="p-6 sm:p-8">
-          <span
-            className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.08em] ${meta.badge}`}
-          >
-            {meta.label}
-          </span>
-
-          <p className="mt-5 text-xl font-semibold leading-snug text-navy sm:text-2xl">
-            {result.summary}
+      <div className="border-b border-line bg-mist p-6 sm:p-8">
+        <p className="font-semibold text-navy">
+          {result.status === "completed"
+            ? `Sprawdzono: ${result.facts.length} ${pluralizeClaims(result.facts.length)}`
+            : "Nie znaleziono sprawdzalnych twierdzeń"}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted">{result.message}</p>
+        {result.source && (
+          <p className="mt-3 text-xs leading-relaxed text-muted">
+            Źródło:{" "}
+            {isHttpUrl(result.source.url) ? (
+              <a
+                href={result.source.url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-navy underline"
+              >
+                {result.source.url}
+              </a>
+            ) : (
+              result.source.url
+            )}{" "}
+            · pobrano przez {result.source.retrievedWith}
           </p>
+        )}
+      </div>
 
-          <h3 className="mt-7 text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-            Ustalenia i źródła
-          </h3>
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-navy marker:text-crimson">
-            {result.details.map((detail, index) => (
-              <li key={`${index}-${detail}`}>{detail}</li>
-            ))}
-          </ul>
+      {result.facts.length > 0 && (
+        <div className="space-y-4 p-4 sm:p-6">
+          {result.facts.map((fact, index) => (
+            <FactCard key={`${fact.claim}-${index}`} fact={fact} />
+          ))}
         </div>
+      )}
 
-        <aside className="border-t border-line bg-mist p-6 sm:p-8 lg:border-l lg:border-t-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted">
-            Poziom pewności
-          </p>
-          <p className="mt-2 text-5xl font-bold leading-none text-navy">
-            {score}
-            <span className="text-2xl">%</span>
-          </p>
-          <div
-            className="mt-4 h-1.5 w-full bg-white"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={score}
-            aria-label="Poziom pewności"
-          >
-            <div className={`h-full ${meta.bar}`} style={{ width: `${score}%` }} />
-          </div>
-
-          <p className="mt-6 text-xs leading-relaxed text-muted">
-            {formatTimestamp(result.timestamp)}
-          </p>
-
-          <button
-            type="button"
-            onClick={onReset}
-            className="btn btn-primary mt-6 h-10 min-h-0 w-full text-xs"
-          >
-            Nowa analiza
-          </button>
-        </aside>
+      <div className="p-6 pt-0 sm:px-8 sm:pb-8">
+        <button
+          type="button"
+          onClick={onReset}
+          className="btn btn-primary h-10 min-h-0 w-full text-xs"
+        >
+          Nowa analiza
+        </button>
       </div>
     </article>
   );
+}
+
+function FactCard({ fact }: { fact: FactCheckResult }) {
+  const meta = VERDICT_META[fact.verdict];
+
+  return (
+    <article className="border border-line p-5 sm:p-6">
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold ${meta.badge}`}
+        >
+          {meta.label}
+        </span>
+        {fact.cacheHit && (
+          <span className="text-xs text-muted">Wynik z pamięci podręcznej</span>
+        )}
+      </div>
+
+      <h3 className="mt-4 text-lg font-semibold leading-snug text-navy">
+        {fact.question}
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-navy">{fact.summary}</p>
+
+      {fact.reviews.length > 0 && (
+        <section className="mt-5">
+          <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Opublikowane weryfikacje
+          </h4>
+          <ul className="mt-2 space-y-3">
+            {fact.reviews.map((review, index) => {
+              const title =
+                review.title
+                ?? review.matchedClaim
+                ?? review.publisher?.name
+                ?? "Opublikowana weryfikacja";
+
+              return (
+                <li
+                  key={`${review.url ?? title}-${index}`}
+                  className="border-l-2 border-crimson pl-3 text-sm"
+                >
+                  {isHttpUrl(review.url) ? (
+                    <a
+                      href={review.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-medium text-navy underline"
+                    >
+                      {title}
+                    </a>
+                  ) : (
+                    <p className="font-medium text-navy">{title}</p>
+                  )}
+                  {review.publisher?.name && (
+                    <p className="mt-1 text-xs text-muted">
+                      Wydawca: {review.publisher.name}
+                    </p>
+                  )}
+                  {review.textualRating && (
+                    <p className="mt-1 text-xs text-muted">
+                      Ocena publikacji: {review.textualRating}
+                    </p>
+                  )}
+                  {review.reviewDate && (
+                    <p className="mt-1 text-xs text-muted">
+                      Data publikacji: {review.reviewDate}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
+      {fact.sources.length > 0 && (
+        <section className="mt-5">
+          <h4 className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Źródła
+          </h4>
+          <ul className="mt-2 space-y-3">
+            {fact.sources.map((source) => (
+              <li
+                key={source.url}
+                className="border-l-2 border-navy pl-3 text-sm"
+              >
+                {isHttpUrl(source.url) ? (
+                  <a
+                    href={source.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-medium text-navy underline"
+                  >
+                    {source.title}
+                  </a>
+                ) : (
+                  <p className="font-medium text-navy">{source.title}</p>
+                )}
+                <p className="mt-1 text-xs text-muted">
+                  {source.domain}
+                  {source.trusted ? " · zaufane źródło" : ""}
+                </p>
+                {source.excerpt && (
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted">
+                    {source.excerpt}
+                  </p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {fact.providerErrors.length > 0 && (
+        <ul className="mt-4 space-y-1 text-xs leading-relaxed text-crimson">
+          {fact.providerErrors.map((error, index) => (
+            <li key={`${index}-${error}`}>{error}</li>
+          ))}
+        </ul>
+      )}
+
+      <p className="mt-4 text-xs leading-relaxed text-muted">
+        Sprawdzono: {formatTimestamp(fact.checkedAt)}
+      </p>
+    </article>
+  );
+}
+
+function pluralizeClaims(count: number): string {
+  if (count === 1) return "twierdzenie";
+  const lastTwo = count % 100;
+  const last = count % 10;
+  return last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)
+    ? "twierdzenia"
+    : "twierdzeń";
+}
+
+function isHttpUrl(value: string | undefined): value is string {
+  if (!value) return false;
+
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function formatTimestamp(value: string): string {

@@ -10,7 +10,7 @@ import {
 
 import type { AnalysisInputType, AnalysisPayload } from "@/types/analysis";
 
-const MAX_FILE_BYTES = 50 * 1024 * 1024;
+const MAX_FILE_BYTES = 6_000_000;
 const MAX_TEXT_LENGTH = 12_000;
 
 const TABS: { id: AnalysisInputType; label: string }[] = [
@@ -77,7 +77,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
     }
 
     if (nextFile.size > MAX_FILE_BYTES) {
-      setError("Maksymalny rozmiar pliku to 50 MB.");
+      setError("Maksymalny rozmiar pliku to 6 MB.");
       return;
     }
 
@@ -282,7 +282,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                       Przeciągnij plik tutaj
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-muted">
-                      PNG, JPG, MP4. Maks. 50 MB.
+                      PNG, JPG, MP4. Maks. 6 MB. Analiza wideo nie jest jeszcze dostępna.
                     </p>
                     <button
                       type="button"

@@ -78,7 +78,7 @@ export default function HomePage() {
                   {[
                     "Tekst, link lub plik",
                     "Analiza kontekstu i źródeł",
-                    "Werdykt i poziom pewności",
+                    "Ocena i źródła",
                   ].map((item, index) => (
                     <li
                       key={item}

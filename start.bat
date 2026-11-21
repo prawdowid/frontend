@@ -23,7 +23,7 @@ echo The browser will open automatically in a few seconds.
 echo Keep this window open while using the app.
 echo.
 
-start "" /b powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 5; Start-Process 'http://localhost:3000'"
+start "" /b powershell -NoProfile -WindowStyle Hidden -Command "Start-Sleep -Seconds 5; Start-Process 'http://localhost:3100'"
 call npm run dev
 
 echo.

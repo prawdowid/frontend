@@ -1,6 +1,6 @@
 # PRAWDOWID
 
-Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub plik i po ok. 1,5 s zwraca raport.
+Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub obraz i wyświetla znalezione fact-checki oraz źródła.
 
 ## Uruchomienie
 
@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Strona: http://localhost:3000
+Strona: http://localhost:3100
 
 ```bash
 npm run typecheck
@@ -46,14 +46,9 @@ src/
 
 ## Backend
 
-- Kontrakt: `src/types/analysis.ts`
-- Wysyłka: `src/services/analyzeService.ts`
-
-Integracja:
-
-1. Ustaw `USE_MOCK = false`.
-2. Ustaw `NEXT_PUBLIC_ANALYSIS_API_URL`.
-3. JSON dla `text` i `link`. `FormData` dla `file`.
-4. Backend zwraca `AnalysisResponse`.
-
-Komentarz `// TODO: BACKEND INTEGRATION` wskazuje miejsce integracji.
+- Domyślny adres API: `http://localhost:3000`; można go zmienić przez `ANALYSIS_API_URL` w `.env.local`.
+- Serwer Next.js przekazuje żądania przez `/api/process/*`, więc przeglądarka nie łączy się bezpośrednio z backendem.
+- Tekst trafia do `POST /process/text`, a link do `POST /process/url`.
+- Obraz jest kodowany jako base64 i trafia do `POST /process/image`; backend zwraca obecnie HTTP 501, ponieważ analiza obrazów nie jest zaimplementowana.
+- Przesłane wideo nie jest jeszcze obsługiwane. Endpoint `/process/video` jest placeholderem i nie zwraca analizy.
+- Wynik backendu zawiera dla każdego twierdzenia automatyczną ocenę (potwierdzone / obalone / brak jednoznacznych danych), krótkie streszczenie oraz źródła, na których ją oparto. To ocena oparta na znalezionych źródłach, a nie niezależny fact-check.

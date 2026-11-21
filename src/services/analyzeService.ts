@@ -1,63 +1,56 @@
 import type {
   AnalysisPayload,
   AnalysisResponse,
-  AnalysisVerdict,
+  FactCheckResult,
+  FactCheckReview,
+  ProviderStatus,
+  TrustedSource,
 } from "@/types/analysis";
 
-const USE_MOCK = true;
-const MOCK_DELAY_MS = 1500;
-const ANALYSIS_ENDPOINT =
-  process.env.NEXT_PUBLIC_ANALYSIS_API_URL ?? "/api/analyze";
+const ANALYSIS_ENDPOINT = "/api/process";
+const MAX_IMAGE_BYTES = 6_000_000;
+const IMAGE_EXTENSIONS = new Set([
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "gif",
+  "heic",
+  "heif",
+]);
+const VIDEO_EXTENSIONS = new Set(["mp4", "webm", "mov", "m4v"]);
 
-// TODO: BACKEND INTEGRATION
-// 1. Change USE_MOCK to false.
-// 2. Set NEXT_PUBLIC_ANALYSIS_API_URL.
-// 3. JSON for "text" / "link": { type, text?, url? }.
-// 4. FormData for "file": fields "type" and "file".
-// 5. Response must match AnalysisResponse.
 export async function submitForAnalysis(
   payload: AnalysisPayload,
 ): Promise<AnalysisResponse> {
   validatePayload(payload);
 
-  if (USE_MOCK) {
-    await sleep(MOCK_DELAY_MS);
-    return buildMockResponse(payload);
+  if (payload.type === "text") {
+    return postJson("text", { text: payload.text?.trim() ?? "" });
   }
 
-  if (payload.type === "file") {
-    const file = payload.file;
-    if (!file) {
-      throw new Error("Dodaj plik do analizy.");
-    }
-
-    const formData = new FormData();
-    formData.append("type", payload.type);
-    formData.append("file", file);
-
-    const response = await fetch(ANALYSIS_ENDPOINT, {
-      method: "POST",
-      headers: { Accept: "application/json" },
-      body: formData,
-    });
-
-    return parseResponse(response);
+  if (payload.type === "link") {
+    return postJson("url", { url: payload.url?.trim() ?? "" });
   }
 
-  const response = await fetch(ANALYSIS_ENDPOINT, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      type: payload.type,
-      text: payload.text,
-      url: payload.url,
-    }),
-  });
+  const file = payload.file;
+  if (!file) {
+    throw new Error("Dodaj plik do analizy.");
+  }
+  if (isVideoFile(file)) {
+    throw new Error("Analiza przesłanych plików wideo nie jest jeszcze dostępna.");
+  }
+  if (!isImageFile(file)) {
+    throw new Error("Backend obsługuje obecnie tylko pliki graficzne.");
+  }
+  if (file.size === 0) {
+    throw new Error("Wybrany plik jest pusty.");
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    throw new Error("Maksymalny rozmiar obrazu to 6 MB.");
+  }
 
-  return parseResponse(response);
+  return postJson("image", { image: await fileToBase64(file) });
 }
 
 function validatePayload(payload: AnalysisPayload): void {
@@ -74,144 +67,215 @@ function validatePayload(payload: AnalysisPayload): void {
   }
 }
 
+async function postJson(
+  endpoint: "text" | "url" | "image",
+  body: Record<string, string>,
+): Promise<AnalysisResponse> {
+  const response = await fetch(`${ANALYSIS_ENDPOINT}/${endpoint}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  return parseResponse(response);
+}
+
 async function parseResponse(response: Response): Promise<AnalysisResponse> {
   if (!response.ok) {
     throw new Error(await readErrorMessage(response));
   }
 
-  const data = (await response.json()) as Partial<AnalysisResponse>;
-  const validVerdicts: AnalysisVerdict[] = [
-    "credible",
-    "misleading",
-    "false",
-    "inconclusive",
-  ];
-
-  if (
-    !data.verdict ||
-    !validVerdicts.includes(data.verdict) ||
-    typeof data.confidenceScore !== "number" ||
-    typeof data.summary !== "string" ||
-    !Array.isArray(data.details) ||
-    !data.details.every((detail) => typeof detail === "string") ||
-    typeof data.timestamp !== "string"
-  ) {
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
     throw new Error("Backend zwrócił nieprawidłowy format odpowiedzi.");
   }
 
-  return data as AnalysisResponse;
+  if (
+    isRecord(data)
+    && data.ok === false
+    && typeof data.error === "string"
+  ) {
+    throw new Error(data.error);
+  }
+  if (!isAnalysisResponse(data)) {
+    throw new Error("Backend zwrócił nieprawidłowy format odpowiedzi.");
+  }
+
+  return data;
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
   try {
-    const data = (await response.json()) as { message?: string; error?: string };
-    return data.message ?? data.error ?? `Błąd serwera (HTTP ${response.status}).`;
+    const data: unknown = await response.json();
+    if (isRecord(data)) {
+      if (typeof data.error === "string") return data.error;
+      if (typeof data.message === "string") return data.message;
+    }
   } catch {
     return `Błąd serwera (HTTP ${response.status}).`;
   }
+
+  return `Błąd serwera (HTTP ${response.status}).`;
 }
 
-interface MockScenario {
-  verdict: AnalysisVerdict;
-  confidence: [number, number];
-  summary: string;
-  details: string[];
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Nie udało się odczytać pliku."));
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        reject(new Error("Nie udało się odczytać pliku."));
+        return;
+      }
+
+      const separator = reader.result.indexOf(",");
+      if (separator < 0) {
+        reject(new Error("Nie udało się zakodować pliku."));
+        return;
+      }
+
+      resolve(reader.result.slice(separator + 1));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
-const MOCK_SCENARIOS: MockScenario[] = [
-  {
-    verdict: "credible",
-    confidence: [84, 95],
-    summary:
-      "Treść pokrywa się z dostępnymi źródłami. Nie znaleziono sygnałów manipulacji.",
-    details: [
-      "Główna teza ma potwierdzenie w dwóch niezależnych źródłach.",
-      "Daty, liczby i cytaty są zgodne z materiałem źródłowym.",
-      "Brak wyciętego kontekstu i emocjonalnych nagłówków.",
-      "Źródła: Reuters Fact Check, Demagog.",
-    ],
-  },
-  {
-    verdict: "misleading",
-    confidence: [66, 82],
-    summary:
-      "Fakty się zgadzają, ale kontekst został skrócony. Taki przekaz może prowadzić do błędnych wniosków.",
-    details: [
-      "Przytoczone dane pochodzą z prawdziwego badania.",
-      "Pominięto okres i skalę, w których dane obowiązują.",
-      "Nagłówek wyciąga wniosek szerszy niż materiał źródłowy.",
-      "Źródła: AFP Fact Check, PolitiFact.",
-    ],
-  },
-  {
-    verdict: "false",
-    confidence: [88, 97],
-    summary:
-      "Kluczowa teza nie znajduje potwierdzenia. Część danych jest sprzeczna ze źródłami pierwotnymi.",
-    details: [
-      "Centralna teza nie ma potwierdzenia w wiarygodnym źródle.",
-      "Liczby różnią się od danych publikowanych w źródle pierwotnym.",
-      "Brak autora, daty lub linku do materiału źródłowego.",
-      "Źródła: FactCheck.org, IFCN.",
-    ],
-  },
-  {
-    verdict: "inconclusive",
-    confidence: [38, 58],
-    summary:
-      "Za mało danych, aby wydać jednoznaczny werdykt. Potrzebny jest pełny materiał lub dodatkowy kontekst.",
-    details: [
-      "Liczba dostępnych źródeł pierwotnych jest zbyt mała.",
-      "Fragment nie zawiera daty, autora ani początku wypowiedzi.",
-      "Rekomendacja: analiza całego materiału i weryfikacja u źródła.",
-      "Źródła: Google Fact Check Explorer.",
-    ],
-  },
-];
-
-function buildMockResponse(payload: AnalysisPayload): AnalysisResponse {
-  const seed = Math.abs(hash(getFingerprint(payload)));
-  const scenario = MOCK_SCENARIOS[seed % MOCK_SCENARIOS.length];
-  const [min, max] = scenario.confidence;
-
-  return {
-    verdict: scenario.verdict,
-    confidenceScore: min + (seed % (max - min + 1)),
-    summary: scenario.summary,
-    details: [...scenario.details, describePayload(payload)],
-    timestamp: new Date().toISOString(),
-  };
+function isImageFile(file: File): boolean {
+  return (
+    file.type.startsWith("image/")
+    || IMAGE_EXTENSIONS.has(getFileExtension(file))
+  );
 }
 
-function getFingerprint(payload: AnalysisPayload): string {
-  if (payload.type === "text") return payload.text?.trim() ?? "";
-  if (payload.type === "link") return payload.url?.trim() ?? "";
-  return `${payload.file?.name ?? ""}:${payload.file?.size ?? 0}`;
+function isVideoFile(file: File): boolean {
+  return (
+    file.type.startsWith("video/")
+    || VIDEO_EXTENSIONS.has(getFileExtension(file))
+  );
 }
 
-function describePayload(payload: AnalysisPayload): string {
-  if (payload.type === "text") {
-    return `Materiał: tekst, ${payload.text?.trim().length ?? 0} znaków.`;
+function getFileExtension(file: File): string {
+  return file.name.split(".").pop()?.toLowerCase() ?? "";
+}
+
+function isAnalysisResponse(value: unknown): value is AnalysisResponse {
+  if (
+    !isRecord(value)
+    || value.ok !== true
+    || (value.status !== "completed" && value.status !== "no_facts")
+    || typeof value.message !== "string"
+    || !Array.isArray(value.facts)
+    || !value.facts.every(isFactCheckResult)
+  ) {
+    return false;
   }
 
-  if (payload.type === "link") {
-    try {
-      const host = new URL(payload.url ?? "").hostname.replace(/^www\./, "");
-      return `Materiał: link, ${host}.`;
-    } catch {
-      return "Materiał: link.";
-    }
+  if (
+    (value.status === "no_facts" && value.facts.length !== 0)
+    || (value.status === "completed" && value.facts.length === 0)
+  ) {
+    return false;
   }
 
-  return `Materiał: plik, ${payload.file?.name ?? "bez nazwy"}.`;
+  return value.source === undefined || isSourceMetadata(value.source);
 }
 
-function hash(value: string): number {
-  return value.split("").reduce((sum, char) => {
-    return (sum * 31 + char.charCodeAt(0)) | 0;
-  }, 7);
+function isFactCheckResult(value: unknown): value is FactCheckResult {
+  if (
+    !isRecord(value)
+    || typeof value.claim !== "string"
+    || typeof value.question !== "string"
+    || (value.status !== "review_found"
+      && value.status !== "sources_found"
+      && value.status !== "no_evidence_found")
+    || typeof value.statusMessage !== "string"
+    || (value.verdict !== "supported"
+      && value.verdict !== "contradicted"
+      && value.verdict !== "unclear")
+    || typeof value.summary !== "string"
+    || !Array.isArray(value.reviews)
+    || !value.reviews.every(isFactCheckReview)
+    || !Array.isArray(value.sources)
+    || !value.sources.every(isTrustedSource)
+    || !Array.isArray(value.providerErrors)
+    || !value.providerErrors.every((error) => typeof error === "string")
+    || typeof value.checkedAt !== "string"
+    || typeof value.cacheHit !== "boolean"
+    || !isRecord(value.providers)
+    || !isRecord(value.providerMessages)
+    || typeof value.providerMessages.googleFactCheck !== "string"
+    || typeof value.providerMessages.jinaSearch !== "string"
+  ) {
+    return false;
+  }
+
+  return (
+    isProviderStatus(value.providers.googleFactCheck)
+    && isProviderStatus(value.providers.jinaSearch)
+  );
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => globalThis.setTimeout(resolve, ms));
+function isFactCheckReview(value: unknown): value is FactCheckReview {
+  if (!isRecord(value)) return false;
+
+  const publisher = value.publisher;
+  const validPublisher =
+    publisher === undefined
+    || (
+      isRecord(publisher)
+      && isOptionalString(publisher.name)
+      && isOptionalString(publisher.site)
+    );
+
+  return (
+    validPublisher
+    && isOptionalString(value.matchedClaim)
+    && isOptionalString(value.url)
+    && isOptionalString(value.title)
+    && isOptionalString(value.reviewDate)
+    && isOptionalString(value.textualRating)
+    && isOptionalString(value.languageCode)
+  );
+}
+
+function isTrustedSource(value: unknown): value is TrustedSource {
+  return (
+    isRecord(value)
+    && typeof value.title === "string"
+    && typeof value.url === "string"
+    && typeof value.domain === "string"
+    && typeof value.trusted === "boolean"
+    && isOptionalString(value.excerpt)
+  );
+}
+
+function isSourceMetadata(
+  value: unknown,
+): value is NonNullable<AnalysisResponse["source"]> {
+  return (
+    isRecord(value)
+    && typeof value.url === "string"
+    && typeof value.retrievedWith === "string"
+  );
+}
+
+function isProviderStatus(value: unknown): value is ProviderStatus {
+  return (
+    value === "available"
+    || value === "not_configured"
+    || value === "unavailable"
+  );
+}
+
+function isOptionalString(value: unknown): value is string | undefined {
+  return value === undefined || typeof value === "string";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

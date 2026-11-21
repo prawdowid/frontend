@@ -6,7 +6,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "PRAWDOWID | Weryfikacja treści z AI",
   description:
-    "Analiza tekstu, linków i multimediów. Werdykt, poziom pewności i źródła.",
+    "Analiza tekstu i linków z odnalezionymi fact-checkami oraz źródłami.",
   applicationName: "PRAWDOWID",
 };
 
