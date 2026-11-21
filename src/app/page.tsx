@@ -65,24 +65,14 @@ export default function HomePage() {
           <div className="shell">
             <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start lg:gap-16">
               <div className="max-w-xl lg:pt-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
-                  Weryfikacja treści · AI
-                </p>
-
                 <h1
                   id="workspace-heading"
-                  className="mt-4 max-w-[10ch] text-[clamp(2.75rem,5.5vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.04em] text-navy"
+                  className="max-w-[10ch] text-[clamp(2.75rem,5.5vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.04em] text-navy"
                 >
                   Sprawdź, co jest prawdą.
                 </h1>
 
                 <span className="accent-rule" aria-hidden="true" />
-
-                <p className="mt-6 max-w-md text-sm leading-relaxed text-navy sm:text-base">
-                  Wklej tekst, dodaj link lub prześlij plik. PRAWDOWID sprawdzi
-                  kontekst i źródła, a następnie pokaże werdykt oraz poziom
-                  pewności.
-                </p>
 
                 <ul className="mt-8 max-w-md space-y-3 border-t border-line pt-6">
                   {[

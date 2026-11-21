@@ -134,11 +134,12 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
   }
 
   return (
-    <section aria-labelledby="panel-heading" className="bg-white p-6 shadow-sm sm:p-8">
-      <h2 id="panel-heading" className="text-2xl font-bold text-navy">
-        Nowa analiza
-      </h2>
-      <p className="mt-2 text-sm text-muted">
+    <section
+      id="panel-heading"
+      aria-label="Panel analizy"
+      className="bg-white p-6 shadow-sm sm:p-8"
+    >
+      <p className="text-sm text-muted">
         Wybierz typ materiału i wyślij do analizy.
       </p>
 
@@ -176,7 +177,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
           role="tabpanel"
           id="analysis-input-panel"
           aria-labelledby={`tab-${tab}`}
-          className="min-h-[264px] pt-6"
+          className="min-h-[232px] pt-6"
         >
           {tab === "text" && (
             <div>
@@ -203,9 +204,8 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                   setError(null);
                 }}
                 placeholder="Wklej post, cytat lub fragment artykułu..."
-                className="field mt-2 min-h-[208px] resize-y py-3"
+                className="field mt-2 min-h-[176px] resize-y py-3"
               />
-              <p className="mt-2 text-xs text-muted">Bez danych osobowych.</p>
             </div>
           )}
 
