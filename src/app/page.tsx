@@ -63,18 +63,52 @@ export default function HomePage() {
           className="bg-mist py-12 sm:py-16 lg:py-20"
         >
           <div className="shell">
-            <h1
-              id="workspace-heading"
-              className="mx-auto max-w-4xl text-center text-[clamp(2.75rem,7vw,5rem)] font-bold leading-[1.02] tracking-[-0.03em] text-navy"
-            >
-              Sprawdź, co jest prawdą.
-            </h1>
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:items-start lg:gap-16">
+              <div className="max-w-xl lg:pt-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">
+                  Weryfikacja treści · AI
+                </p>
 
-            <div className="mx-auto mt-8 w-full max-w-[720px] sm:mt-10">
-              <InputPanel
-                isLoading={state.status === "loading"}
-                onSubmit={handleAnalyze}
-              />
+                <h1
+                  id="workspace-heading"
+                  className="mt-4 max-w-[10ch] text-[clamp(2.75rem,5.5vw,4.75rem)] font-bold leading-[0.98] tracking-[-0.04em] text-navy"
+                >
+                  Sprawdź, co jest prawdą.
+                </h1>
+
+                <span className="accent-rule" aria-hidden="true" />
+
+                <p className="mt-6 max-w-md text-sm leading-relaxed text-navy sm:text-base">
+                  Wklej tekst, dodaj link lub prześlij plik. PRAWDOWID sprawdzi
+                  kontekst i źródła, a następnie pokaże werdykt oraz poziom
+                  pewności.
+                </p>
+
+                <ul className="mt-8 max-w-md space-y-3 border-t border-line pt-6">
+                  {[
+                    "Tekst, link lub plik",
+                    "Analiza kontekstu i źródeł",
+                    "Werdykt i poziom pewności",
+                  ].map((item, index) => (
+                    <li
+                      key={item}
+                      className="flex items-center gap-3 text-sm text-muted"
+                    >
+                      <span className="font-mono text-[10px] font-semibold tracking-[0.08em] text-crimson">
+                        {String(index + 1).padStart(2, "0")}
+                      </span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="w-full">
+                <InputPanel
+                  isLoading={state.status === "loading"}
+                  onSubmit={handleAnalyze}
+                />
+              </div>
             </div>
           </div>
         </section>

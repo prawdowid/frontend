@@ -4,6 +4,14 @@ Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub plik i po o
 
 ## Uruchomienie
 
+### Windows — kliknij dwukrotnie
+
+Po zainstalowaniu Node.js LTS (min. 20.9) wystarczy kliknąć dwukrotnie
+`start.bat`. Skrypt sam zainstaluje zależności, uruchomi stronę i otworzy
+przeglądarkę. Okna terminala nie należy zamykać podczas korzystania z aplikacji.
+
+### Ręcznie
+
 ```bash
 npm install
 npm run dev
