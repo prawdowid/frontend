@@ -1,0 +1,83 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --c-navy: #264653;
+  --c-accent: #dc143c;
+  --c-mist: #f2f4f5;
+  --c-line: #d9e1e3;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    @apply bg-white font-sans text-navy antialiased;
+    min-height: 100vh;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--c-accent);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 2px;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-[1180px] px-5 sm:px-8;
+  }
+
+  .accent-rule {
+    display: block;
+    width: 4rem;
+    height: 0.25rem;
+    margin-top: 1rem;
+    background: var(--c-accent);
+  }
+
+  .field {
+    @apply w-full rounded-none border border-line bg-white px-4 text-[15px] text-navy placeholder:text-muted/70 focus:border-navy focus:outline-none focus:ring-0;
+  }
+
+  .dropzone {
+    @apply border border-dashed border-line bg-mist/50 transition-colors;
+  }
+
+  .dropzone[data-dragging="true"] {
+    @apply border-crimson bg-crimson/5;
+  }
+
+  .btn {
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
