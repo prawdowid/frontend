@@ -71,6 +71,91 @@ const RELATION_LABELS: Record<BackendEvidence["relation"], string> = {
 const MAX_DETAILS = 30;
 const MAX_EVIDENCE_PER_CLAIM = 2;
 
+/** Old cache entries stored the English predicate; new ones are already Polish. */
+const POLISH_PREDICATES: Record<string, string> = {
+  status: "jest",
+  is: "jest",
+  was: "był",
+  has: "ma",
+  is_capital_of: "jest stolicą",
+  capital_of: "jest stolicą",
+  joined: "przystąpiła do",
+  membership: "należy do",
+  borders: "graniczy z",
+  resigned_from_position: "zrezygnował z funkcji",
+  regained_independence: "odzyskała niepodległość",
+  spending_on_transport: "wydatki na transport",
+  destroyed: "zniszczony",
+  count: "liczba",
+  won: "wygrał",
+  lost: "przegrał",
+  will_be: "będzie",
+  announced: "ogłosił",
+  signed: "podpisał",
+  attacked: "zaatakował",
+  killed: "zabił",
+  died: "zmarł",
+  arrested: "aresztował",
+  elected: "wybrany",
+  appointed: "mianowany",
+  introduced: "wprowadził",
+  increased: "wzrosła",
+  decreased: "spadła",
+};
+
+const POLISH_KEEP = new Set([
+  "jest",
+  "był",
+  "ma",
+  "jest stolicą",
+  "przystąpiła do",
+  "członkostwo w",
+  "należy do",
+  "graniczy z",
+  "zrezygnował z funkcji",
+  "odzyskała niepodległość",
+  "wydatki na transport",
+  "zniszczony",
+  "liczba",
+  "wygrał",
+  "przegrał",
+  "będzie",
+  "ogłosił",
+  "podpisał",
+  "zaatakował",
+  "zabił",
+  "zmarł",
+  "aresztował",
+  "wybrany",
+  "mianowany",
+  "wprowadził",
+  "wzrosła",
+  "spadła",
+  "dotyczy",
+]);
+
+function formatClaim(value: string): string {
+  const parts = value.split(/\s+[—–-]\s+/);
+  if (parts.length !== 3) return value;
+
+  const [subject, predicate, object] = parts.map((part) => part.trim());
+  const key = predicate.toLowerCase().replace(/\s+/g, "_");
+  const translated = POLISH_PREDICATES[key];
+
+  if (translated) return `${subject} — ${translated} — ${object}`;
+  if (POLISH_KEEP.has(predicate.toLowerCase())) return value;
+
+  // Do not show an untranslated English predicate from an old cache entry.
+  return `${subject} — ${object}`;
+}
+
+function cleanEvidenceTitle(value: string): string {
+  return value
+    .replace(/[*_`#>]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export class BackendAnalysisError extends Error {
   constructor(
     message: string,
@@ -100,23 +185,20 @@ export function mapVerifyResponse(data: BackendVerifyResponse): AnalysisResponse
     const label = VERDICT_LABELS[claim.verdict] ?? "Nieznany wynik";
     const reasoning = claim.reasoning?.trim();
     details.push(
-      `${label}: ${claim.claim}${reasoning ? ` - ${reasoning}` : ""}`,
+      `${label}: ${formatClaim(claim.claim)}${reasoning ? ` - ${reasoning}` : ""}`,
     );
 
     for (const evidence of (claim.evidence ?? []).slice(0, MAX_EVIDENCE_PER_CLAIM)) {
       const relation = RELATION_LABELS[evidence.relation] ?? "źródło";
-      const title = evidence.title ? `„${evidence.title}”` : "źródło";
+      const title = evidence.title
+        ? `„${cleanEvidenceTitle(evidence.title)}”`
+        : "źródło";
       details.push(
         `Źródło (${relation}): ${evidence.publisher || "nieznany wydawca"}, ${title} - ${evidence.url}`,
       );
     }
 
     if (details.length >= MAX_DETAILS) break;
-  }
-
-  for (const limitation of data.limitations ?? []) {
-    if (details.length >= MAX_DETAILS) break;
-    details.push(`Ograniczenie: ${limitation}`);
   }
 
   return {
@@ -137,12 +219,30 @@ function overallVerdict(claims: BackendClaimVerdict[]): AnalysisVerdict {
 }
 
 function averageConfidence(claims: BackendClaimVerdict[]): number {
-  const values = claims
+  if (claims.length === 0) return 0;
+
+  const verdict = overallVerdict(claims);
+
+  // An abstention is not a confident verdict. Never show more than 10%.
+  if (verdict === "inconclusive") {
+    return 5;
+  }
+
+  const decisive =
+    verdict === "credible"
+      ? claims.filter((claim) => claim.verdict === "confirmed")
+      : claims.filter((claim) => claim.verdict === verdict);
+
+  const values = decisive
     .map((claim) => claim.confidence)
     .filter((value) => Number.isFinite(value));
 
-  if (values.length === 0) return 0;
+  if (values.length === 0) return 5;
 
-  const average = values.reduce((sum, value) => sum + value, 0) / values.length;
-  return Math.min(100, Math.max(0, Math.round(average * 100)));
+  // "Wiarygodne" requires every claim to be confirmed, so the weakest one
+  // limits the score. One strong false/misleading claim is enough to decide.
+  const raw =
+    verdict === "credible" ? Math.min(...values) : Math.max(...values);
+
+  return Math.min(99, Math.max(0, Math.round(raw * 100)));
 }

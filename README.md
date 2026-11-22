@@ -10,14 +10,17 @@ Po zainstalowaniu Node.js LTS (min. 20.9) wystarczy kliknąć dwukrotnie
 `start.bat`. Skrypt sam zainstaluje zależności, uruchomi stronę i otworzy
 przeglądarkę. Okna terminala nie należy zamykać podczas korzystania z aplikacji.
 
+Frontend wymaga uruchomionego backendu (domyślnie `http://localhost:3000`).
+W drugim oknie uruchom `backend\start.bat`.
+
 ### Ręcznie
 
 ```bash
 npm install
-npm run dev
+npm run dev:api
 ```
 
-Strona: http://localhost:3000
+Strona: http://localhost:3001
 
 ```bash
 npm run typecheck

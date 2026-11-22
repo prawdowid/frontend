@@ -19,19 +19,18 @@ const TECH_STACK = [
   {
     label: "Warstwa AI",
     items: [
-      "OpenRouter",
-      "DeepSeek v4.1 Flash - ekstrakcja (reasoning OFF)",
-      "Jev / RLCD - bramka i dopasowanie twierdzeń",
-      "bge-m3 - embeddingi (PL)",
-      "DeepSeek-OCR - tekst ze zdjęć",
+      "DeepSeek Flash - jedyny model",
+      "Ekstrakcja, bramka i dopasowanie twierdzeń",
+      "DeepSeek OCR - tekst ze zdjęć",
+      "Embeddingi lokalne - bez modelu i klucza",
     ],
   },
   {
     label: "Dane i research",
     items: [
-      "Lokalny korpus: 135 źródeł, 48 hostów",
-      "Google Fact Check Tools",
-      "Wikipedia - fallback",
+      "Lokalny korpus źródeł",
+      "Wikipedia i Wikidata",
+      "Wyszukiwanie internetowe DeepSeek",
       "Snapshot EUvsDisinfo",
     ],
   },
@@ -54,27 +53,27 @@ const FLOW_STEPS = [
   {
     title: "OCR",
     detail:
-      "Zdjęcie PNG, JPG lub WebP jest odczytywane przez DeepSeek-OCR. Obraz nie jest niezależnie weryfikowany - dalsza analiza pracuje na odczytanym tekście.",
+      "Zdjęcie PNG, JPG lub WebP jest odczytywane przez DeepSeek OCR. Obraz nie jest niezależnie weryfikowany - dalsza analiza pracuje na odczytanym tekście.",
   },
   {
-    title: "Bramka Jev",
+    title: "Bramka DeepSeek",
     detail:
-      "Ocena polityczna materiału jest raportowana, ale nie blokuje weryfikacji. Bramka służy też do dopasowania twierdzeń.",
+      "Ocena polityczna materiału jest raportowana, ale nie blokuje weryfikacji. Ten sam model dopasowuje też twierdzenia do cache.",
   },
   {
     title: "Ekstrakcja",
     detail:
-      "DeepSeek v4.1 Flash wyciąga fakty i rozbija je na atomowe twierdzenia w układzie SPO: podmiot, orzeczenie, obiekt.",
+      "DeepSeek Flash wyciąga fakty i rozbija je na atomowe twierdzenia w układzie SPO: podmiot, orzeczenie, obiekt.",
   },
   {
     title: "Embeddingi i cache",
     detail:
-      "bge-m3 liczy wektory i zawęża listę kandydatów. Cache sprawdza klucz dokładny, dopasowanie Jev i wpis czasowy.",
+      "Lokalne wektory hashowe zawężają listę kandydatów bez dodatkowego modelu. Cache sprawdza klucz dokładny, dopasowanie DeepSeek i wpis czasowy.",
   },
   {
     title: "Research i dowody",
     detail:
-      "System przeszukuje lokalny korpus, Google Fact Check Tools, Wikipedię oraz snapshot EUvsDisinfo i zbiera dowody.",
+      "System przeszukuje lokalny korpus, Wikipedię, Wikidane, snapshot EUvsDisinfo oraz internet przez DeepSeek Search i zbiera dowody.",
   },
   {
     title: "VerifyResponse",
@@ -771,8 +770,8 @@ Content-Type: application/json
 
           <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted">
             Zakładka „Plik” przyjmuje PNG, JPG i WebP do 8 MB. Tekst ze zdjęcia
-            jest odczytywany przez backendowy OCR. Moduł ASR istnieje w kodzie
-            backendu, ale nie jest wpięty do <PolishCode>/verify</PolishCode>,
+            jest odczytywany przez DeepSeek OCR. Moduł ASR (DeepSeek) istnieje
+            w kodzie backendu, ale nie jest wpięty do <PolishCode>/verify</PolishCode>,
             dlatego wideo nie jest obsługiwane przez API ani przez frontend.
           </p>
         </div>
@@ -800,9 +799,9 @@ Content-Type: application/json
                 $0.0003-$0.001
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted">
-                Gate, ekstrakcja i embeddingi dla tekstu lub linku. Research z
-                Google jest darmowy w ramach limitu. OCR obrazów korzysta z
-                osobnej usługi i nie jest wliczony w ten szacunek.
+                Ekstrakcja, bramka i dopasowanie przez DeepSeek dla tekstu lub
+                linku. Embeddingi są lokalne i darmowe. OCR obrazów jest
+                rozliczany przez DeepSeek osobno, za stronę.
               </p>
             </div>
             <div className="border border-line bg-white p-6">
@@ -826,9 +825,9 @@ Content-Type: application/json
             <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 ["Ekstrakcja", "DeepSeek - tokeny wejścia i wyjścia"],
-                ["Bramka i matching", "Jev / RLCD - zużycie z odpowiedzi"],
-                ["Embeddingi", "bge-m3 - szacunek na podstawie znaków"],
-                ["Research", "Google Fact Check, Wikipedia, EUvsDisinfo"],
+                ["Bramka i matching", "DeepSeek - tokeny decyzji"],
+                ["Embeddingi", "Lokalne wektory - bez kosztu"],
+                ["Research", "DeepSeek Search, Wikipedia, EUvsDisinfo"],
               ].map(([title, detail], index) => (
                 <li key={title} className="border-t border-line pt-3">
                   <span className="font-mono text-[10px] font-semibold text-crimson">
