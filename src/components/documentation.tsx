@@ -29,7 +29,7 @@ const TECH_STACK = [
   {
     label: "Dane i research",
     items: [
-      "Lokalny korpus: 122 źródła, 29 domen",
+      "Lokalny korpus: 135 źródeł, 48 hostów",
       "Google Fact Check Tools",
       "Wikipedia - fallback",
       "Snapshot EUvsDisinfo",
@@ -40,7 +40,7 @@ const TECH_STACK = [
     items: [
       "Pliki JSON w data/ - domyślnie",
       "MySQL - opcjonalnie",
-      "Redis - wyłącznie warstwa ulotna",
+      "Redis - planowany, jeszcze niewdrożony",
     ],
   },
 ];
@@ -84,7 +84,7 @@ const FLOW_STEPS = [
   {
     title: "API backendu",
     detail:
-      "Kontrakt wystawia POST /verify. Kanały WWW, API i bot korzystają z tej samej funkcji pipeline'u.",
+      "Kontrakt wystawia POST /verify. WWW i API korzystają z tej samej funkcji pipeline'u.",
   },
   {
     title: "Proxy frontendu",
@@ -167,6 +167,16 @@ const RESPONSE_FIELDS = [
   },
 ];
 
+const BACKEND_ENDPOINTS = [
+  ["POST", "/verify", "Weryfikacja tekstu, linku lub obrazu."],
+  ["GET", "/health", "Status procesu i wersja."],
+  ["GET", "/metrics", "Liczniki, p50/p95 i średni koszt."],
+  ["GET", "/cases", "Nierozstrzygnięte sprawy moderacyjne."],
+  ["POST", "/cases/:id/ack", "Moderator bierze sprawę."],
+  ["GET", "/docs", "Swagger UI."],
+  ["GET", "/", "Wbudowany interfejs WWW backendu."],
+];
+
 const CLAIM_FIELDS = [
   "id, claim",
   "verdict",
@@ -213,27 +223,35 @@ const VERDICTS = [
 const INPUT_SUPPORT = [
   {
     input: "Tekst",
-    support: "Tak",
+    backend: "Tak",
+    frontend: "Tak",
     note: "Wklejony post, cytat lub fragment artykułu.",
-    supported: true,
+    backendSupported: true,
+    frontendSupported: true,
   },
   {
     input: "Link",
-    support: "Tak",
+    backend: "Tak",
+    frontend: "Tak",
     note: "Publiczny adres http/https.",
-    supported: true,
+    backendSupported: true,
+    frontendSupported: true,
   },
   {
     input: "Obraz PNG / JPG / WebP",
-    support: "Tak (OCR)",
-    note: "Tekst ze zdjęcia jest odczytywany przez OCR i trafia do dalszej analizy. Limit: 8 MB.",
-    supported: true,
+    backend: "Tak (OCR)",
+    frontend: "Tak, do 8 MB",
+    note: "Tekst ze zdjęcia jest odczytywany przez OCR i trafia do dalszej analizy.",
+    backendSupported: true,
+    frontendSupported: true,
   },
   {
     input: "Wideo MP4",
-    support: "Nie",
-    note: "Brak transkrypcji (ASR). API zwraca czytelny błąd 415 zamiast zmyślonego wyniku.",
-    supported: false,
+    backend: "Nie przez /verify",
+    frontend: "Nie",
+    note: "Brak transkrypcji wpiętej do endpointu. Frontend nie oferuje wideo, a proxy zwraca błąd 415.",
+    backendSupported: false,
+    frontendSupported: false,
   },
 ];
 
@@ -241,7 +259,7 @@ const GUARANTEES = [
   {
     title: "Cytowanie zamiast opinii",
     detail:
-      "Każde twierdzenie dostaje dowody: tytuł, wydawcę, datę, URL, fragment i relację (wspiera, przeczy, kontekst).",
+      "Twierdzenia rozstrzygnięte dostają dowody: tytuł, wydawcę, datę, URL, fragment i relację (wspiera, przeczy, kontekst). Brak dowodów kończy się jawnym insufficient_evidence.",
   },
   {
     title: "Kontekst czasowy",
@@ -256,7 +274,7 @@ const GUARANTEES = [
   {
     title: "Jasny status i limity",
     detail:
-      "Błąd techniczny i prośba o doprecyzowanie to osobne statusy, nigdy werdykt. Redis odpowiada za hot-cache, locki, rate limit i kolejkę rechecków.",
+      "Błąd techniczny i prośba o doprecyzowanie to osobne statusy, nigdy werdykt. Rate limit działa w pamięci procesu; trwały hot-cache w Redisie i kolejka rechecków nie są jeszcze wdrożone.",
   },
 ];
 
@@ -264,12 +282,12 @@ const LIMITATIONS = [
   {
     title: "Brak ASR",
     detail:
-      "Obrazy są odczytywane przez OCR, ale wideo (MP4) nie ma jeszcze transkrypcji. Frontend pokazuje wtedy komunikat, nie zmyślony wynik.",
+      "Obrazy są odczytywane przez OCR, ale wideo (MP4) nie ma transkrypcji wpiętej do /verify. Frontend nie oferuje wideo, a proxy odrzuca taki plik czytelnym komunikatem.",
   },
   {
     title: "Pokrycie korpusu",
     detail:
-      "Lokalny korpus liczy 122 źródła w 29 domenach. To nie jest pełny internet; brak dowodu oznacza insufficient_evidence, nie fałsz.",
+      "Lokalny korpus liczy 135 źródeł w 48 hostach. To nie jest pełny internet; brak dowodu oznacza insufficient_evidence, nie fałsz.",
   },
   {
     title: "Budżet researchu",
@@ -570,6 +588,47 @@ Content-Type: application/json
             </div>
           </div>
 
+          <div className="mt-6 border border-line bg-white p-5 sm:p-6">
+            <h3 className="text-sm font-semibold text-navy">
+              Pozostałe endpointy backendu
+            </h3>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[560px] border-collapse text-left text-sm">
+                <caption className="sr-only">
+                  Endpointy wystawiane przez backend PRAWDOWID
+                </caption>
+                <thead>
+                  <tr className="border-b border-line text-[10px] uppercase tracking-[0.08em] text-muted">
+                    <th scope="col" className="py-2 pr-4 font-semibold">
+                      Metoda
+                    </th>
+                    <th scope="col" className="py-2 pr-4 font-semibold">
+                      Ścieżka
+                    </th>
+                    <th scope="col" className="py-2 font-semibold">
+                      Opis
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {BACKEND_ENDPOINTS.map(([method, path, description]) => (
+                    <tr key={`${method}-${path}`} className="border-b border-line/70 last:border-0">
+                      <td className="py-3 pr-4 align-top font-mono text-[11px] font-semibold text-crimson">
+                        {method}
+                      </td>
+                      <td className="py-3 pr-4 align-top font-mono text-xs font-semibold text-navy">
+                        {path}
+                      </td>
+                      <td className="py-3 align-top text-xs leading-relaxed text-muted">
+                        {description}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <div className="border border-line bg-white p-5 sm:p-6">
               <h3 className="text-sm font-semibold text-navy">
@@ -650,9 +709,9 @@ Content-Type: application/json
           />
 
           <div className="mt-8 overflow-x-auto border border-line">
-            <table className="w-full min-w-[560px] border-collapse text-left text-sm">
+            <table className="w-full min-w-[720px] border-collapse text-left text-sm">
               <caption className="sr-only">
-                Obsługiwane typy materiałów wejściowych
+                Obsługiwane typy materiałów wejściowych w backendzie i frontendzie
               </caption>
               <thead className="bg-mist">
                 <tr className="text-[10px] uppercase tracking-[0.08em] text-muted">
@@ -660,7 +719,10 @@ Content-Type: application/json
                     Wejście
                   </th>
                   <th scope="col" className="px-4 py-3 font-semibold">
-                    Obsługiwane
+                    Backend /verify
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    Frontend
                   </th>
                   <th scope="col" className="px-4 py-3 font-semibold">
                     Uwagi
@@ -679,12 +741,23 @@ Content-Type: application/json
                     <td className="px-4 py-4 align-top">
                       <span
                         className={`inline-flex px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${
-                          row.supported
+                          row.backendSupported
                             ? "bg-navy text-white"
                             : "bg-mist text-crimson"
                         }`}
                       >
-                        {row.support}
+                        {row.backend}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 align-top">
+                      <span
+                        className={`inline-flex px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${
+                          row.frontendSupported
+                            ? "bg-navy text-white"
+                            : "bg-mist text-crimson"
+                        }`}
+                      >
+                        {row.frontend}
                       </span>
                     </td>
                     <td className="px-4 py-4 align-top text-xs leading-relaxed text-muted">
@@ -698,8 +771,9 @@ Content-Type: application/json
 
           <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted">
             Zakładka „Plik” przyjmuje PNG, JPG i WebP do 8 MB. Tekst ze zdjęcia
-            jest odczytywany przez backendowy OCR. Transkrypcja wideo nie jest
-            jeszcze włączona - to jawne ograniczenie MVP, nie błąd integracji.
+            jest odczytywany przez backendowy OCR. Moduł ASR istnieje w kodzie
+            backendu, ale nie jest wpięty do <PolishCode>/verify</PolishCode>,
+            dlatego wideo nie jest obsługiwane przez API ani przez frontend.
           </p>
         </div>
       </section>
@@ -714,7 +788,7 @@ Content-Type: application/json
             id="cost-heading"
             eyebrow="06 - Ekonomia"
             title="Koszt sprawdzenia"
-            description="Wielkości pochodzą z szacunku backendu. Zależą od długości materiału, liczby twierdzeń i dostępności researchu - to nie jest rozliczenie."
+            description="Wielkości pochodzą z szacunku backendu dla typowego tekstu lub linku. Zależą od długości materiału, liczby twierdzeń i dostępności researchu - to nie jest rozliczenie."
           />
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -726,8 +800,9 @@ Content-Type: application/json
                 $0.0003-$0.001
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted">
-                Gate, ekstrakcja i embeddingi. Research z Google jest darmowy w
-                ramach limitu.
+                Gate, ekstrakcja i embeddingi dla tekstu lub linku. Research z
+                Google jest darmowy w ramach limitu. OCR obrazów korzysta z
+                osobnej usługi i nie jest wliczony w ten szacunek.
               </p>
             </div>
             <div className="border border-line bg-white p-6">
