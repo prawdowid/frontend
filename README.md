@@ -24,19 +24,40 @@ npm run typecheck
 npm run build
 ```
 
+### Docker
+
+Obraz produkcyjny uruchamia `next start` na porcie `3001`:
+
+```bash
+docker build -t prawdowid-frontend .
+docker run --rm -p 3001:3001 \
+  -e BACKEND_API_URL=http://host.docker.internal:3000 \
+  prawdowid-frontend
+```
+
+`BACKEND_API_URL` jest używany wyłącznie po stronie serwera, więc nie trafia do
+przeglądarki. Na Linuksie zamiast `host.docker.internal` użyj adresu hosta albo
+uruchom całość przez `backend/docker-compose.yml`, który buduje też frontend
+i łączy go z backendem po sieci compose.
+
 ## Struktura
 
 ```text
 src/
   app/
+    api/analyze/route.ts
+    dokumentacja/page.tsx
     globals.css
     layout.tsx
     page.tsx
   components/
     about-section.tsx
     analysis-result.tsx
+    documentation.tsx
     input-panel.tsx
     site-header.tsx
+  lib/
+    backendAnalysis.ts
   services/
     analyzeService.ts
   types/
