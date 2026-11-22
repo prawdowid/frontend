@@ -1,6 +1,6 @@
 # PRAWDOWID
 
-Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub plik i po ok. 1,5 s zwraca raport.
+Frontend aplikacji do weryfikacji treści. Przyjmuje tekst lub link, wysyła materiał do backendu PRAWDOWID i pokazuje werdykt wraz ze źródłami.
 
 ## Uruchomienie
 
@@ -46,14 +46,47 @@ src/
 
 ## Backend
 
-- Kontrakt: `src/types/analysis.ts`
-- Wysyłka: `src/services/analyzeService.ts`
+Frontend nie udaje już analizy: `src/services/analyzeService.ts` wysyła materiał
+do `POST /api/analyze`, a trasa serwerowa `src/app/api/analyze/route.ts` woła
+backend PRAWDOWID (`POST /verify`) i mapuje jego kontrakt na `AnalysisResponse`
+z `src/types/analysis.ts`.
 
-Integracja:
+### Uruchomienie razem z backendem
 
-1. Ustaw `USE_MOCK = false`.
-2. Ustaw `NEXT_PUBLIC_ANALYSIS_API_URL`.
-3. JSON dla `text` i `link`. `FormData` dla `file`.
-4. Backend zwraca `AnalysisResponse`.
+Backend domyślnie zajmuje port `3000`, więc frontend uruchamiamy na `3001`:
 
-Komentarz `// TODO: BACKEND INTEGRATION` wskazuje miejsce integracji.
+```bash
+# terminal 1
+cd ../backend
+bun run dev
+
+# terminal 2
+cd ../frontend
+cp .env.example .env
+npm run dev:api
+```
+
+Strona: http://localhost:3001
+
+Jeśli backend działa pod innym adresem, ustaw `BACKEND_API_URL` w `.env`
+(zmienna jest używana tylko po stronie serwera, więc nie trafia do przeglądarki).
+
+### Zakres integracji
+
+- `text` → backend `{ text }`,
+- `link` → backend `{ url }`,
+- `file` → backend nie ma jeszcze ścieżki OCR/transkrypcji, dlatego API zwraca
+  czytelny błąd `415` zamiast zmyślonego wyniku.
+
+Odpowiedź backendu (`confirmed`, `false`, `misleading`,
+`insufficient_evidence`, `not_verifiable`) jest agregowana do werdyktu UI,
+a twierdzenia, uzasadnienia i źródła trafiają do sekcji „Ustalenia i źródła”.
+
+### Kierunek rozwoju
+
+Obecnie `/verify` jest wywołaniem synchronicznym: po wysłaniu formularza strona
+przewija do sekcji wyniku i pokazuje stan oczekiwania. Docelowo backend ma
+zwracać identyfikator zadania, a frontend ma subskrybować jego postęp przez
+WebSocket i renderować etapy analizy w czasie rzeczywistym (`AnalysisState`
+w `src/types/ui.ts` jest miejscem na rozszerzenie o `jobId` i `progress`).
+
