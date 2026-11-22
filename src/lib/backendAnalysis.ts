@@ -100,14 +100,14 @@ export function mapVerifyResponse(data: BackendVerifyResponse): AnalysisResponse
     const label = VERDICT_LABELS[claim.verdict] ?? "Nieznany wynik";
     const reasoning = claim.reasoning?.trim();
     details.push(
-      `${label}: ${claim.claim}${reasoning ? ` — ${reasoning}` : ""}`,
+      `${label}: ${claim.claim}${reasoning ? ` - ${reasoning}` : ""}`,
     );
 
     for (const evidence of (claim.evidence ?? []).slice(0, MAX_EVIDENCE_PER_CLAIM)) {
       const relation = RELATION_LABELS[evidence.relation] ?? "źródło";
       const title = evidence.title ? `„${evidence.title}”` : "źródło";
       details.push(
-        `Źródło (${relation}): ${evidence.publisher || "nieznany wydawca"}, ${title} — ${evidence.url}`,
+        `Źródło (${relation}): ${evidence.publisher || "nieznany wydawca"}, ${title} - ${evidence.url}`,
       );
     }
 

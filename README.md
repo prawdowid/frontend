@@ -4,7 +4,7 @@ Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub zdjęcie, w
 
 ## Uruchomienie
 
-### Windows — kliknij dwukrotnie
+### Windows - kliknij dwukrotnie
 
 Po zainstalowaniu Node.js LTS (min. 20.9) wystarczy kliknąć dwukrotnie
 `start.bat`. Skrypt sam zainstaluje zależności, uruchomi stronę i otworzy

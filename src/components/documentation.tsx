@@ -20,10 +20,10 @@ const TECH_STACK = [
     label: "Warstwa AI",
     items: [
       "OpenRouter",
-      "DeepSeek v4.1 Flash — ekstrakcja (reasoning OFF)",
-      "Jev / RLCD — bramka i dopasowanie twierdzeń",
-      "bge-m3 — embeddingi (PL)",
-      "DeepSeek-OCR — tekst ze zdjęć",
+      "DeepSeek v4.1 Flash - ekstrakcja (reasoning OFF)",
+      "Jev / RLCD - bramka i dopasowanie twierdzeń",
+      "bge-m3 - embeddingi (PL)",
+      "DeepSeek-OCR - tekst ze zdjęć",
     ],
   },
   {
@@ -31,16 +31,16 @@ const TECH_STACK = [
     items: [
       "Lokalny korpus: 122 źródła, 29 domen",
       "Google Fact Check Tools",
-      "Wikipedia — fallback",
+      "Wikipedia - fallback",
       "Snapshot EUvsDisinfo",
     ],
   },
   {
     label: "Przechowywanie",
     items: [
-      "Pliki JSON w data/ — domyślnie",
-      "MySQL — opcjonalnie",
-      "Redis — wyłącznie warstwa ulotna",
+      "Pliki JSON w data/ - domyślnie",
+      "MySQL - opcjonalnie",
+      "Redis - wyłącznie warstwa ulotna",
     ],
   },
 ];
@@ -54,7 +54,7 @@ const FLOW_STEPS = [
   {
     title: "OCR",
     detail:
-      "Zdjęcie PNG, JPG lub WebP jest odczytywane przez DeepSeek-OCR. Obraz nie jest niezależnie weryfikowany — dalsza analiza pracuje na odczytanym tekście.",
+      "Zdjęcie PNG, JPG lub WebP jest odczytywane przez DeepSeek-OCR. Obraz nie jest niezależnie weryfikowany - dalsza analiza pracuje na odczytanym tekście.",
   },
   {
     title: "Bramka Jev",
@@ -366,7 +366,7 @@ export function Documentation() {
         <div className="shell">
           <SectionHeading
             id="overview-heading"
-            eyebrow="01 — Zasada"
+            eyebrow="01 - Zasada"
             title="Werdykt ze źródeł, nie z modelu"
           />
 
@@ -412,7 +412,7 @@ export function Documentation() {
         <div className="shell">
           <SectionHeading
             id="stack-heading"
-            eyebrow="02 — Architektura"
+            eyebrow="02 - Architektura"
             title="Stos technologiczny"
             description="Warstwy są rozdzielone: frontend nie zna wewnętrznego kontraktu backendu, a backend nie zależy od interfejsu WWW."
           />
@@ -454,7 +454,7 @@ export function Documentation() {
         <div className="shell">
           <SectionHeading
             id="flow-heading"
-            eyebrow="03 — Pipeline"
+            eyebrow="03 - Pipeline"
             title="Przepływ żądania"
             description="Od wejścia użytkownika do werdyktu w interfejsie. Każdy etap ma jasny kontrakt i może zakończyć się jawnym ograniczeniem."
           />
@@ -488,15 +488,15 @@ export function Documentation() {
         <div className="shell">
           <SectionHeading
             id="api-heading"
-            eyebrow="04 — Kontrakt"
+            eyebrow="04 - Kontrakt"
             title="POST /verify"
-            description="Backend przyjmuje tekst, link albo zdjęcie i zwraca ujednoliconą odpowiedź. Frontend nie woła backendu bezpośrednio — korzysta z własnego proxy."
+            description="Backend przyjmuje tekst, link albo zdjęcie i zwraca ujednoliconą odpowiedź. Frontend nie woła backendu bezpośrednio - korzysta z własnego proxy."
           />
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
             <div className="border border-line bg-white p-5 sm:p-6">
               <h3 className="text-sm font-semibold text-navy">
-                Żądanie — pola wejściowe
+                Żądanie - pola wejściowe
               </h3>
               <div className="mt-4 overflow-x-auto">
                 <table className="w-full min-w-[420px] border-collapse text-left text-sm">
@@ -547,7 +547,7 @@ Content-Type: application/json
 
             <div className="border border-line bg-white p-5 sm:p-6">
               <h3 className="text-sm font-semibold text-navy">
-                Odpowiedź — pola VerifyResponse
+                Odpowiedź - pola VerifyResponse
               </h3>
               <dl className="mt-4 divide-y divide-line">
                 {RESPONSE_FIELDS.map((row) => (
@@ -644,7 +644,7 @@ Content-Type: application/json
         <div className="shell">
           <SectionHeading
             id="inputs-heading"
-            eyebrow="05 — Zakres"
+            eyebrow="05 - Zakres"
             title="Co można sprawdzić"
             description="Zakres MVP jest jawny. Lepiej pokazać ograniczenie niż zasymulować analizę, której backend nie wykonuje."
           />
@@ -699,7 +699,7 @@ Content-Type: application/json
           <p className="mt-4 max-w-3xl text-xs leading-relaxed text-muted">
             Zakładka „Plik” przyjmuje PNG, JPG i WebP do 8 MB. Tekst ze zdjęcia
             jest odczytywany przez backendowy OCR. Transkrypcja wideo nie jest
-            jeszcze włączona — to jawne ograniczenie MVP, nie błąd integracji.
+            jeszcze włączona - to jawne ograniczenie MVP, nie błąd integracji.
           </p>
         </div>
       </section>
@@ -712,9 +712,9 @@ Content-Type: application/json
         <div className="shell">
           <SectionHeading
             id="cost-heading"
-            eyebrow="06 — Ekonomia"
+            eyebrow="06 - Ekonomia"
             title="Koszt sprawdzenia"
-            description="Wielkości pochodzą z szacunku backendu. Zależą od długości materiału, liczby twierdzeń i dostępności researchu — to nie jest rozliczenie."
+            description="Wielkości pochodzą z szacunku backendu. Zależą od długości materiału, liczby twierdzeń i dostępności researchu - to nie jest rozliczenie."
           />
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -723,7 +723,7 @@ Content-Type: application/json
                 Jedno sprawdzenie
               </p>
               <p className="mt-3 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-                $0.0003–$0.001
+                $0.0003-$0.001
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted">
                 Gate, ekstrakcja i embeddingi. Research z Google jest darmowy w
@@ -735,7 +735,7 @@ Content-Type: application/json
                 1000 sprawdzeń
               </p>
               <p className="mt-3 text-3xl font-bold tracking-tight text-navy sm:text-4xl">
-                $0.3–$1
+                $0.3-$1
               </p>
               <p className="mt-2 text-xs leading-relaxed text-muted">
                 Szacunek rzędu wielkości. Rzeczywisty koszt zależy od ruchu i
@@ -750,9 +750,9 @@ Content-Type: application/json
             </h3>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {[
-                ["Ekstrakcja", "DeepSeek — tokeny wejścia i wyjścia"],
-                ["Bramka i matching", "Jev / RLCD — zużycie z odpowiedzi"],
-                ["Embeddingi", "bge-m3 — szacunek na podstawie znaków"],
+                ["Ekstrakcja", "DeepSeek - tokeny wejścia i wyjścia"],
+                ["Bramka i matching", "Jev / RLCD - zużycie z odpowiedzi"],
+                ["Embeddingi", "bge-m3 - szacunek na podstawie znaków"],
                 ["Research", "Google Fact Check, Wikipedia, EUvsDisinfo"],
               ].map(([title, detail], index) => (
                 <li key={title} className="border-t border-line pt-3">
@@ -782,8 +782,8 @@ Content-Type: application/json
         <div className="shell">
           <SectionHeading
             id="guarantees-heading"
-            eyebrow="07 — Zakres odpowiedzialności"
-            title="Co system zapewnia — i czego nie zapewnia"
+            eyebrow="07 - Zakres odpowiedzialności"
+            title="Co system zapewnia - i czego nie zapewnia"
           />
 
           <div className="mt-8 grid gap-8 lg:grid-cols-2 lg:gap-12">
@@ -839,7 +839,7 @@ Content-Type: application/json
       >
         <div className="shell">
           <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em] text-white/70">
-            08 — Pomiar
+            08 - Pomiar
           </p>
           <h2
             id="evaluation-heading"
@@ -873,8 +873,8 @@ Content-Type: application/json
           </div>
 
           <p className="mt-6 max-w-3xl border-t border-white/15 pt-4 text-xs leading-relaxed text-white/70">
-            Dokładne metryki — m.in. skuteczność werdyktów, pokrycie źródeł,
-            opóźnienie i koszt jednostkowy — zostaną dostarczone przez agenta
+            Dokładne metryki - m.in. skuteczność werdyktów, pokrycie źródeł,
+            opóźnienie i koszt jednostkowy - zostaną dostarczone przez agenta
             ewaluacji po zakończeniu pomiarów.
           </p>
         </div>
