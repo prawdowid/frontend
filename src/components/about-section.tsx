@@ -28,6 +28,9 @@ export function AboutSection() {
           <h3 className="text-lg font-semibold text-navy">
             KN Neuron Prawdowid
           </h3>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-crimson">
+            UMG - Wydział Informatyczny
+          </p>
 
           <p className="mt-5 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
             Członkowie
