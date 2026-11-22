@@ -35,6 +35,8 @@ interface AnalysisResultProps {
 }
 
 export function AnalysisResult({ state, onReset }: AnalysisResultProps) {
+  if (state.status === "idle") return null;
+
   return (
     <section aria-labelledby="result-heading" aria-live="polite">
       <h2 id="result-heading" className="text-3xl font-bold text-navy sm:text-4xl">
@@ -43,7 +45,6 @@ export function AnalysisResult({ state, onReset }: AnalysisResultProps) {
       <span className="accent-rule" aria-hidden="true" />
 
       <div className="mt-6">
-        {state.status === "idle" && <IdleState />}
         {state.status === "loading" && <LoadingState />}
         {state.status === "error" && (
           <ErrorState message={state.message} onReset={onReset} />
@@ -53,17 +54,6 @@ export function AnalysisResult({ state, onReset }: AnalysisResultProps) {
         )}
       </div>
     </section>
-  );
-}
-
-function IdleState() {
-  return (
-    <div className="bg-mist p-6">
-      <p className="font-semibold text-navy">Brak analizy</p>
-      <p className="mt-1 text-sm leading-relaxed text-muted">
-        Wyślij materiał w panelu powyżej. Wynik pojawi się w tym miejscu.
-      </p>
-    </div>
   );
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AboutSection } from "@/components/about-section";
 import { AnalysisResult } from "@/components/analysis-result";
@@ -13,13 +13,30 @@ import type { AnalysisState } from "@/types/ui";
 export default function HomePage() {
   const [state, setState] = useState<AnalysisState>({ status: "idle" });
   const resultRef = useRef<HTMLElement>(null);
+  const previousStatus = useRef(state.status);
+
+  useEffect(() => {
+    if (previousStatus.current === state.status) return;
+    previousStatus.current = state.status;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    const behavior: ScrollBehavior = prefersReducedMotion ? "auto" : "smooth";
+
+    if (state.status === "idle") {
+      document.getElementById("panel-heading")?.scrollIntoView({
+        behavior,
+        block: "center",
+      });
+      return;
+    }
+
+    resultRef.current?.scrollIntoView({ behavior, block: "start" });
+  }, [state.status]);
 
   async function handleAnalyze(payload: AnalysisPayload) {
     setState({ status: "loading" });
-
-    window.setTimeout(() => {
-      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 80);
 
     try {
       const result = await submitForAnalysis(payload);
@@ -37,13 +54,6 @@ export default function HomePage() {
 
   function handleReset() {
     setState({ status: "idle" });
-
-    window.setTimeout(() => {
-      document.getElementById("panel-heading")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 40);
   }
 
   return (
@@ -103,15 +113,17 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section
-          id="wynik"
-          ref={resultRef}
-          className="scroll-mt-20 bg-white py-14 sm:py-16"
-        >
-          <div className="shell">
-            <AnalysisResult state={state} onReset={handleReset} />
-          </div>
-        </section>
+        {state.status !== "idle" && (
+          <section
+            id="wynik"
+            ref={resultRef}
+            className="scroll-mt-20 bg-white py-14 sm:py-16"
+          >
+            <div className="shell">
+              <AnalysisResult state={state} onReset={handleReset} />
+            </div>
+          </section>
+        )}
 
         <AboutSection />
       </main>
