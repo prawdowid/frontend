@@ -10,7 +10,7 @@ import {
 
 import type { AnalysisInputType, AnalysisPayload } from "@/types/analysis";
 
-const MAX_FILE_BYTES = 50 * 1024 * 1024;
+const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const MAX_TEXT_LENGTH = 12_000;
 
 const TABS: { id: AnalysisInputType; label: string }[] = [
@@ -19,7 +19,7 @@ const TABS: { id: AnalysisInputType; label: string }[] = [
   { id: "file", label: "Plik" },
 ];
 
-const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "mp4"]);
+const ALLOWED_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp"]);
 
 interface InputPanelProps {
   isLoading: boolean;
@@ -72,12 +72,12 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
     }
 
     if (!isAllowedFile(nextFile)) {
-      setError("Dozwolone pliki: PNG, JPG i MP4.");
+      setError("Dozwolone pliki: PNG, JPG i WebP.");
       return;
     }
 
     if (nextFile.size > MAX_FILE_BYTES) {
-      setError("Maksymalny rozmiar pliku to 50 MB.");
+      setError("Maksymalny rozmiar pliku to 8 MB.");
       return;
     }
 
@@ -228,7 +228,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
           {tab === "file" && (
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy">
-                Screen, zdjęcie lub wideo
+                Screen lub zdjęcie
               </p>
               <div
                 className="dropzone mt-2 p-5 text-center"
@@ -248,7 +248,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".png,.jpg,.mp4"
+                  accept=".png,.jpg,.jpeg,.webp"
                   className="sr-only"
                   disabled={isLoading}
                   onChange={(event) => {
@@ -282,7 +282,7 @@ export function InputPanel({ isLoading, onSubmit }: InputPanelProps) {
                       Przeciągnij plik tutaj
                     </p>
                     <p className="mt-1 text-xs leading-relaxed text-muted">
-                      PNG, JPG, MP4. Maks. 50 MB.
+                      PNG, JPG, WebP. Maks. 8 MB.
                     </p>
                     <button
                       type="button"

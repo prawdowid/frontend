@@ -1,6 +1,6 @@
 # PRAWDOWID
 
-Frontend aplikacji do weryfikacji treści. Przyjmuje tekst lub link, wysyła materiał do backendu PRAWDOWID i pokazuje werdykt wraz ze źródłami.
+Frontend aplikacji do weryfikacji treści. Przyjmuje tekst, link lub zdjęcie, wysyła materiał do backendu PRAWDOWID i pokazuje werdykt wraz ze źródłami.
 
 ## Uruchomienie
 
@@ -75,7 +75,8 @@ Jeśli backend działa pod innym adresem, ustaw `BACKEND_API_URL` w `.env`
 
 - `text` → backend `{ text }`,
 - `link` → backend `{ url }`,
-- `file` → backend nie ma jeszcze ścieżki OCR/transkrypcji, dlatego API zwraca
+- `image` (PNG/JPG/WebP, max 8 MB) → backend `{ image }` i OCR po stronie backendu,
+- `MP4` → transkrypcja wideo (ASR) nie jest jeszcze włączona, dlatego API zwraca
   czytelny błąd `415` zamiast zmyślonego wyniku.
 
 Odpowiedź backendu (`confirmed`, `false`, `misleading`,

@@ -4,12 +4,17 @@ import {
   type BackendVerifyResponse,
 } from "@/lib/backendAnalysis";
 
+export const runtime = "nodejs";
+
 const BACKEND_API_URL = (
   process.env.BACKEND_API_URL ?? "http://localhost:3000"
 ).replace(/\/+$/, "");
 
 const REQUEST_TIMEOUT_MS = 120_000;
 const MAX_TEXT_LENGTH = 100_000;
+/** Backend decodes the image before OCR and rejects anything above 8 MB. */
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "webp"]);
 
 class RequestError extends Error {
   constructor(
@@ -24,6 +29,7 @@ class RequestError extends Error {
 type BackendPayload = {
   text?: string;
   url?: string;
+  image?: string;
   channel: "web";
 };
 
@@ -69,15 +75,31 @@ async function readPayload(request: Request): Promise<BackendPayload> {
   if (contentType.includes("multipart/form-data")) {
     const form = await request.formData();
     const type = form.get("type");
+    const file = form.get("file");
 
-    if (type === "file") {
+    if (type !== "file" || !(file instanceof File)) {
+      throw new RequestError("Nieprawidłowy format żądania.", 400);
+    }
+
+    const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+
+    if (!IMAGE_EXTENSIONS.has(extension)) {
       throw new RequestError(
-        "Backend obsługuje obecnie tekst i linki. Analiza plików (OCR, transkrypcja) nie jest jeszcze włączona.",
+        "Na razie analizujemy obrazy PNG, JPG i WebP. Transkrypcja wideo (MP4) nie jest jeszcze włączona.",
         415,
       );
     }
 
-    throw new RequestError("Nieprawidłowy format żądania.", 400);
+    if (file.size === 0) {
+      throw new RequestError("Plik jest pusty.", 400);
+    }
+
+    if (file.size > MAX_IMAGE_BYTES) {
+      throw new RequestError("Maksymalny rozmiar obrazu to 8 MB.", 400);
+    }
+
+    const bytes = Buffer.from(await file.arrayBuffer());
+    return { image: bytes.toString("base64"), channel: "web" };
   }
 
   const body = (await request.json().catch(() => null)) as {
